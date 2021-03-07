@@ -1,4 +1,4 @@
-from sqlalchemy import Text, MetaData, Table
+from sqlalchemy import Text, MetaData, Table, insert
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,6 +9,7 @@ import random
 from sqlalchemy.sql import select
 from tools import benchmark
 import redis
+from itertools import count
 
 # --- SQL SETTINGS ---
 
@@ -108,34 +109,104 @@ benchmark({'redis same line': hgetall, 'redis random line': hgetallrandom, 'psql
 
 
 # ----- GET SHOW ID----#
-def hmget1():
-    r.hmget('s1', 'show_id')
-
 
 def hmget4000():
     r.hmget('s4000', 'show_id')
 
 
-def hmget7000():
-    r.hmget('s7000', 'show_id')
+def selectShowId4000():
+    s = select([netflix_movies.c.show_id]).where(netflix_movies.c.show_id == 's4000')
+    conn.execute(s)
 
 
-# benchmark({'get s1':hmget1,'get s4000':hmget4000,'get s7000':hmget7000})
+benchmark({'redis s4000': hmget4000, 'psql s4000': selectShowId4000})
+
+indice_redis = count(start=8000)
 
 
 def hmset():
-    r.hmset('test', next(df.iterrows())[1].to_dict())
+    idx = next(indice_redis)
+    r.hmset('s' + str(idx), next(df.iterrows())[1].to_dict())
+
+
+indice_psql = count(start=8000)
+
+
+def insertPsql():
+    idx = next(indice_psql)
+    i = insert(netflix_movies).values(show_id='s' + str(idx), type='type', title='title', director='director',
+                                      cast='cast', country='country', date_added='date_added',
+                                      release_year='release_year', rating='rating', duration='duration',
+                                      listed_in='listed_in', description='description')
+    conn.execute(i)
 
 
 # ----- SET A LINE----#
-# benchmark({'hmset': hmset})
+benchmark({'redis insert': hmset, 'psql insert': insertPsql})
 
 # ----- KEY exists?---#
-def exist1():
-    r.exists('s1')
-
 
 def exist7000():
     r.exists('s7000')
 
-# benchmark({'s1': exist1, 's2': exist7000})
+
+def sql_director_exists_head():
+    req = 'SELECT CASE WHEN EXISTS( \
+        SELECT  director FROM netflix_movies WHERE director = \'David Raynr\' ) \
+    THEN 1 ELSE 0 END AS res;'
+    conn.execute(req)
+
+
+def sql_director_exists_middle():
+    req = 'SELECT CASE WHEN EXISTS( \
+        SELECT  director FROM netflix_movies WHERE director = \'Lance Daly\' ) \
+    THEN 1 ELSE 0 END AS res;'
+    conn.execute(req)
+
+
+def sql_director_exists_end():
+    req = 'SELECT CASE WHEN EXISTS( \
+        SELECT  director FROM netflix_movies WHERE director = \'Emma Hatherley\' ) \
+    THEN 1 ELSE 0 END AS res;'
+    conn.execute(req)
+
+
+
+def redis_director_exists_head():
+    for show_id in r.scan_iter():
+        if (r.hget(show_id,'director')==b'David Raynr'):
+            return
+
+
+def redis_director_exists_middle():
+    for show_id in r.scan_iter():
+        if (r.hget(show_id, 'director') == b'Lance Daly'):
+            return True
+    return False
+
+
+def redis_director_exists_end():
+    for show_id in r.scan_iter():
+        if (r.hget(show_id, 'director') == b'Emma Hatherley'):
+            return True
+    return False
+
+
+benchmark({'redis dir exists head': redis_director_exists_head, 'redis dir exists middle': redis_director_exists_middle,
+           'redis dir exists end': redis_director_exists_end, 'psql dir exists head': sql_director_exists_head,
+           'psql dir exists middle': sql_director_exists_middle, 'psql dir exists end': sql_director_exists_end}, run_nb=10)
+
+
+def sql_indian_films():
+    req = 'SELECT show_id FROM netflix_movies WHERE country = \'India\';'
+    conn.execute(req)
+
+
+def redis_indian_films():
+    indian_films = []
+    for show_id in r.scan_iter():
+        if (r.hget(show_id, 'country') == b'India'):
+            indian_films.append(show_id)
+
+benchmark({'redis indian films': redis_director_exists_head, 'psql indian films': redis_director_exists_middle}, run_nb=10)
+

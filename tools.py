@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def benchmark(commands):
+def benchmark(commands, run_nb=10000):
     """
     Function to run run_nb times a list of command and display stats and boxplot
     """
-    run_nb = 10000
     run_times = []
     medians = []
     for command_idx, command_name in enumerate(commands):
@@ -28,7 +27,6 @@ def benchmark(commands):
 
     fig, ax1 = plt.subplots(figsize=(5, 5))
     ax1.boxplot(run_times)
-    print(commands.keys())
     ax1.set_xticklabels(commands.keys(),
                         rotation=45, fontsize=8)
     ax1.set_ylim(0, np.max(medians) * 2)
