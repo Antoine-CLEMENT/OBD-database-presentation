@@ -26,6 +26,10 @@ def benchmark(commands):
         run_times.append(run_time)
         medians.append(median)
 
-    plt.boxplot(run_times)
-    plt.ylim(0, np.max(medians) * 2)
+    fig, ax1 = plt.subplots(figsize=(5, 5))
+    ax1.boxplot(run_times)
+    print(commands.keys())
+    ax1.set_xticklabels(commands.keys(),
+                        rotation=45, fontsize=8)
+    ax1.set_ylim(0, np.max(medians) * 2)
     plt.show()
