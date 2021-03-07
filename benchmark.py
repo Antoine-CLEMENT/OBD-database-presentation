@@ -5,6 +5,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
+import random
+from tools import benchmark
+
+### SQL SETTINGS
 
 POSTGRES_PASSWORD = 'no_pass'
 PORT = '5436'
@@ -33,7 +37,7 @@ netflix_movies = Table(
 # Create db
 netflix_movies.create()
 
-netflix_data_to_inject = pd.read_csv('netflix_titles.csv', sep=';').to_dict(orient='records')
+netflix_data_to_inject = pd.read_csv('netflix_titles_2.csv', sep=';').to_dict(orient='records')
 
 metadata.reflect()
 table = sqlalchemy.Table('netflix_movies', metadata, autoload=True)
@@ -51,3 +55,63 @@ session.commit()
 
 # Close the session
 session.close()
+
+### REDIS SETTINGS
+
+#import redis
+import redis
+r = redis.Redis()
+#empties all previous keys
+r.flushall()
+#check there is no key anymore
+r.keys()
+
+
+#-------Import dataset in redis-------
+df = pd.read_csv("netflix_titles.csv")
+df.head()
+with r.pipeline() as pipe:
+    for index, row in df.iterrows():
+        pipe.hmset(row.show_id,row.to_dict())
+    pipe.execute()
+
+#------- GET A WHOLE LINE -------#
+
+def hgetall():
+    r.hgetall('s7392')
+
+
+def hgetallrandom():
+    i = random.randint(1, 7787)
+    r.hgetall('s' + str(i))
+
+
+benchmark({'hget same line': hgetall, 'hget random line': hgetallrandom})
+
+#----- GET SHOW ID----#
+def hmget1():
+    r.hmget('s1','show_id')
+def hmget4000():
+    r.hmget('s4000','show_id')
+def hmget7000():
+    r.hmget('s7000','show_id')
+
+benchmark({'get s1':hmget1,'get s4000':hmget4000,'get s7000':hmget7000})
+
+
+def hmset():
+    r.hmset('test', next(df.iterrows())[1].to_dict())
+
+#----- SET A LINE----#
+benchmark({'hmset': hmset})
+
+#----- KEY exists?---#
+def exist1():
+    r.exists('s1')
+
+
+def exist7000():
+    r.exists('s7000')
+
+
+benchmark({'s1': exist1, 's2': exist7000})
