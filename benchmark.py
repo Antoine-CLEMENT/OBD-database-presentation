@@ -37,7 +37,7 @@ netflix_movies = Table(
 # Create db
 netflix_movies.create()
 
-netflix_data_to_inject = pd.read_csv('netflix_titles.csv', sep=';').to_dict(orient='records')
+netflix_data_to_inject = pd.read_csv('netflix_titles_2.csv', sep=';').to_dict(orient='records')
 
 metadata.reflect()
 table = sqlalchemy.Table('netflix_movies', metadata, autoload=True)
