@@ -7,8 +7,9 @@ from sqlalchemy.orm import sessionmaker
 import pandas as pd
 import random
 from sqlalchemy.sql import select
-from tools import benchmark
+from tools import benchmark,benchmark_thread
 import redis
+
 
 # --- SQL SETTINGS ---
 
@@ -103,8 +104,8 @@ def selectRandom():
     conn.execute(s)
 
 
-benchmark({'redis same line': hgetall, 'redis random line': hgetallrandom, 'psql same line': selectFixed,
-           'psql random line': selectRandom})
+#benchmark({'redis same line': hgetall, 'redis random line': hgetallrandom, 'psql same line': selectFixed,
+           #'psql random line': selectRandom})
 
 
 # ----- GET SHOW ID----#
@@ -139,3 +140,23 @@ def exist7000():
     r.exists('s7000')
 
 # benchmark({'s1': exist1, 's2': exist7000})
+
+
+
+
+
+
+############THREADING######################
+
+# ------- GET A WHOLE LINE -------#
+
+def hgetall(r):
+    r.hgetall('s7392')
+
+
+def selectFixed(conn):
+    s = select([netflix_movies]).where(netflix_movies.c.show_id == 's7392')
+    conn.execute(s)
+
+
+benchmark_thread({'redis same line': (hgetall,'r'),  'psql same line': (selectFixed,'psql')},engine,1000,50)
