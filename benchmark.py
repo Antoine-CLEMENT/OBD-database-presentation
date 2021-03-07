@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 import pandas as pd
 
 POSTGRES_PASSWORD = 'no_pass'
-PORT = '5436'
+PORT = '5432'
 
 # docker container run -d --name psql --rm -e POSTGRES_PASSWORD=no_pass -p 5436:5432 postgres:11-alpine
 
@@ -33,7 +33,7 @@ netflix_movies = Table(
 # Create db
 netflix_movies.create()
 
-netflix_data_to_inject = pd.read_csv('netflix_titles.csv', sep=';').to_dict(orient='records')
+netflix_data_to_inject = pd.read_csv('netflix_titles.csv').to_dict(orient='records')
 
 metadata.reflect()
 table = sqlalchemy.Table('netflix_movies', metadata, autoload=True)

@@ -6,13 +6,13 @@
 
 To run this code, you should have python (at least 3.7), docker and docker-compose installed
 
-In a terminal, run the following commands:
+In a terminal, run the following commands :
 
 ```
  pip install -r requirements.txt
 ```
 
-And deploy redis and psql in two distinct containers:
+And deploy redis and psql in two distinct containers :
 
 ```
 docker-compose up --build
@@ -20,9 +20,17 @@ docker-compose up --build
 
 You can then access the databases inside the container by running 
 
-blablabla
+redis : 
 
-blablabla
+```
+docker run -it --rm --network obd-database-presentation_default redis:6.2 /usr/local/bin/redis-cli -h redis
+```
+
+psql : 
+
+```
+docker run -it --rm --network obd-database-presentation_default postgres:11 /usr/bin/psql postgresql://postgres:no_pass@psql:5432/postgres
+```
 
 To run our benchmark tests to compare redis and psql, you just need to execute `benchmark.py`.
 
