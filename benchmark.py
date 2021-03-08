@@ -192,7 +192,7 @@ benchmark({'redis dir exists head': redis_director_exists_head,
            'redis dir exists middle': redis_director_exists_end, 'redis dir exists end': redis_director_exists_middle,
            'psql dir exists head': sql_director_exists_head,
            'psql dir exists middle': sql_director_exists_middle, 'psql dir exists end': sql_director_exists_end},
-          run_nb=100)
+          run_nb=10)
 
 
 def redis_indian_films():
@@ -239,20 +239,20 @@ def psql_compute_mean():
     return req
 
 
-benchmark({'redis avg': redis_compute_mean, 'psql avg': psql_compute_mean}, run_nb=100)
+benchmark({'redis avg': redis_compute_mean, 'psql avg': psql_compute_mean}, run_nb=10)
 
 
 # -----------THREADING------------#
 
 # ------- GET A WHOLE LINE -------#
 
-def hgetall():
-    r.hgetall('s7392')
+def hgetall(redis_instance):
+    redis_instance.hgetall('s7392')
 
 
-def selectFixed():
+def selectFixed(connection_thread):
     s = select([netflix_movies]).where(netflix_movies.c.show_id == 's7392')
-    conn.execute(s)
+    connection_thread.execute(s)
 
 
 benchmark_thread({'redis same line': (hgetall, 'r'), 'psql same line': (selectFixed, 'psql')}, engine, 1000, 50, True)
@@ -260,13 +260,13 @@ benchmark_thread({'redis same line': (hgetall, 'r'), 'psql same line': (selectFi
 
 # ----- GET SHOW ID----#
 
-def hmget4001():
-    r.hmget('s4001', 'show_id')
+def hmget4001(redis_thread):
+    redis_thread.hmget('s4001', 'show_id')
 
 
-def selectShowId4001():
-    s = select([netflix_movies.c.show_id]).where(netflix_movies.c.show_id == 's4001')
-    conn.execute(s)
+def selectShowId4001(connection_thread):
+    s = select([netflix_movies.c.show_id]).where(netflix_movies.c.show_id == b's4001')
+    connection_thread.execute(s)
 
 
 benchmark_thread({'redis hmget': (hgetall, 'r'), 'psql select show id': (selectFixed, 'psql')}, engine, 1000, 50, True)
@@ -274,15 +274,15 @@ benchmark_thread({'redis hmget': (hgetall, 'r'), 'psql select show id': (selectF
 
 # ----- Incremetnation----#
 
-def increment():
-    r.hincrby("s7001", "release_year")
+def increment(redis_thread):
+    redis_thread.hincrby("s7001", "release_year")
 
 
-def update():
+def update(connection_thread):
     req = 'UPDATE netflix_movies\
         SET release_year = release_year + 1\
         WHERE show_id = \'s7001\''
-    conn.execute(req)
+    connection_thread.execute(req)
 
 
 medians_redis = []
@@ -300,4 +300,3 @@ plt.plot(index, medians_redis, label='redis')
 plt.plot(index, medians_psql, label='psql')
 plt.legend()
 plt.show()
-
