@@ -23,7 +23,7 @@ You can then access the databases inside the container by running
 redis : 
 
 ```
-docker run -it --rm --network obd-database-presentation_default redis:6.2 /usr/local/bin/redis-cli -h redis
+docker run -it --rm --network obd-database-presentation_default redis:5.0.12 /usr/local/bin/redis-cli -h redis
 ```
 
 psql : 
@@ -34,4 +34,4 @@ docker run -it --rm --network obd-database-presentation_default postgres:11 /usr
 
 To run our benchmark tests to compare redis and psql, you just need to execute `benchmark.py`.
 
-This will populate the databases with the recordings from netflix databases, and execute stress on them
+This will populate the databases with the recordings from netflix databases, and execute stress on them.
