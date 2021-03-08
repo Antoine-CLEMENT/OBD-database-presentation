@@ -6,11 +6,10 @@ import logging
 import threading
 import redis
 
-def benchmark(commands):
+def benchmark(commands, run_nb=10000):
     """
     Function to run run_nb times a list of command and display stats and boxplot
     """
-    run_nb = 10000
     run_times = []
     medians = []
     for command_idx, command_name in enumerate(commands):
@@ -31,13 +30,15 @@ def benchmark(commands):
 
     fig, ax1 = plt.subplots(figsize=(5, 5))
     ax1.boxplot(run_times)
-    print(commands.keys())
     ax1.set_xticklabels(commands.keys(),
                         rotation=45, fontsize=8)
     ax1.set_ylim(0, np.max(medians) * 2)
     plt.show()
 
 def thread_function(name,command,engine,run_nb,time_storage):
+    """
+       Function to run run_nb times a  command in one thread
+       """
     logging.info("Thread %s: starting", name)
     #redis
     if engine is None:
@@ -59,7 +60,9 @@ def thread_function(name,command,engine,run_nb,time_storage):
 
 
 def thread_run(command,client_nb,run_nb,engine):
-
+    """
+       Function call client_nb thread to run run_nb times the same command
+       """
     threads = list()
     time_storage={}
 
@@ -77,9 +80,14 @@ def thread_run(command,client_nb,run_nb,engine):
     concat_time=[]
     for thread_time in time_storage:
         concat_time+=time_storage[thread_time]
+    print("CONCAT TIME")
+    print(len(concat_time))
     return concat_time
 
-def benchmark_thread(commands,engine,run_nb,client_nb):
+def benchmark_thread(commands,engine,run_nb,client_nb,show):
+    """
+         Main Function compute thread concurrency stats between several commands
+         """
     run_times=[]
     medians=[]
 
@@ -99,12 +107,13 @@ def benchmark_thread(commands,engine,run_nb,client_nb):
         run_times.append(run_time)
         medians.append(median)
 
-
-    fig, ax1 = plt.subplots(figsize=(5, 5))
-    ax1.boxplot(run_times)
-    ax1.set_xticklabels(commands.keys(),
-                        rotation=45, fontsize=8)
-    ax1.set_ylim(0, np.max(medians) * 2)
-    plt.show()
+    if show:
+        fig, ax1 = plt.subplots(figsize=(5, 5))
+        ax1.boxplot(run_times)
+        ax1.set_xticklabels(commands.keys(),
+                            rotation=45, fontsize=8)
+        ax1.set_ylim(0, np.max(medians) * 2)
+        plt.show()
+    return(medians)
 
 
